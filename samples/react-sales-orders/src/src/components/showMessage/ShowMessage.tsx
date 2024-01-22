@@ -11,7 +11,7 @@ import {
 } from '@fluentui/react-icons';
 import { Icon } from '@iconify/react';
 
-import { EMessageType } from '../constants/EMessageTypes';
+import { EMessageType } from '../../constants/EMessageTypes';
 import { IShowMessageProps } from './IShowMessageProps';
 import { useShowMessageStyles } from './useShowMessageStyles';
 

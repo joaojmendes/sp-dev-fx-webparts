@@ -20,7 +20,6 @@ import { useGraphAPI } from '../hooks/useGraphAPI';
 import { ICustomer } from '../models/ICustomer';
 import { IMenuItem } from '../models/IMenuItem';
 import { IOrder } from '../models/IOrder';
-import { ShowMessage } from '../showMessage/ShowMessage';
 import { CompanyInfo } from './companyInfo/CompanyInfo';
 import { CustomersGrid } from './customersGrid/CustomersGrid';
 import { ISalesordersProps } from './ISalesordersProps';
@@ -29,6 +28,7 @@ import { Menu } from './menu/Menu';
 import { NoOrders } from './noOrders/NoOrders';
 import { OrdersGrid } from './ordersGrid/OrdersGrid';
 import { Right } from './right/Right';
+import { ShowMessage } from './showMessage/ShowMessage';
 import { StatusOrdersInfo } from './statusOrdersInfo/StatusOrdersInfo';
 import { useSalesordersStyles } from './useSalesordersStyles';
 
@@ -51,8 +51,7 @@ export const SalesordersControl: React.FunctionComponent<ISalesordersProps> = (
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [customers, setCustomers] = React.useState<ICustomer[]>([]);
   const [error, setError] = React.useState<Error>((undefined as unknown) as Error);
-  
- 
+
   React.useEffect(() => {
     setAppglobalState({ ...appglobalState, ...props });
     // bug,gridtemplateareas is not reconized as CSS property
@@ -77,15 +76,10 @@ export const SalesordersControl: React.FunctionComponent<ISalesordersProps> = (
             break;
         }
       } catch (error) {
-      debugger;
         setError(error);
       } finally {
         setIsLoading(false);
       }
-      /*  const customers = await getCustomers(searchText);
-      setCustomers(customers);
-      setOrders(orders ); */
-      /* setIsLoading(false); */
     })();
   }, [searchText, selectedItem, props, searchOrders, getCustomers]);
 
@@ -167,12 +161,12 @@ export const SalesordersControl: React.FunctionComponent<ISalesordersProps> = (
       );
     }
     return <>{!hasOrders ? <NoOrders /> : renderSelectedContent()}</>;
-  }, [ hasError, error, isLoading, hasOrders, renderSelectedContent]);
+  }, [hasError, error, isLoading, hasOrders, renderSelectedContent]);
 
   return (
     <>
-      <main className={styles.mainContainer} style={{ height: !hasTeamsContext ? "calc(100vh - 147px)" : "100vh"}}>
-        <div className={styles.contentContainer}   ref={divContainer}>
+      <main className={styles.mainContainer} style={{ height: !hasTeamsContext ? "calc(100vh - 147px)" : "100vh" }}>
+        <div className={styles.contentContainer} ref={divContainer}>
           <Left>
             <CompanyInfo />
             <Menu currentItem={selectedItem as IMenuItem} onItemClick={(item) => setSelectedItem(item)} />

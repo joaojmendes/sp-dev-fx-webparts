@@ -4,6 +4,7 @@ import { Provider } from 'jotai';
 
 import {
   FluentProvider,
+  IdPrefixProvider,
   teamsDarkTheme,
   teamsHighContrastTheme,
   teamsLightTheme,
@@ -13,28 +14,31 @@ import {
 import { ISalesordersProps } from './ISalesordersProps';
 import { SalesordersControl } from './SalesordersControls';
 
-export const Salesorders: React.FunctionComponent<ISalesordersProps> = (props: React.PropsWithChildren<ISalesordersProps>) => {
-  const { themeString ,   } = props;
+export const Salesorders: React.FunctionComponent<ISalesordersProps> = (
+  props: React.PropsWithChildren<ISalesordersProps>
+) => {
+  const { themeString } = props;
   return (
     <>
-      <FluentProvider
-        theme={
-          themeString === "dark"
-            ? teamsDarkTheme
-            : themeString === "contrast"
-            ? teamsHighContrastTheme
-            : {
-                ...teamsLightTheme,
-                colorNeutralBackground3: "#eeeeee",
-              }
-        }
-        style={{ background: tokens.colorNeutralBackground3 }}
-      >
-        <Provider>
-          <SalesordersControl {...props} />
-        </Provider>
-      </FluentProvider>
-
+      <IdPrefixProvider value="SalesOrders-">
+        <FluentProvider
+          theme={
+            themeString === "dark"
+              ? teamsDarkTheme
+              : themeString === "contrast"
+              ? teamsHighContrastTheme
+              : {
+                  ...teamsLightTheme,
+                  colorNeutralBackground3: "#eeeeee",
+                }
+          }
+          style={{ background: tokens.colorNeutralBackground3 }}
+        >
+          <Provider>
+            <SalesordersControl {...props} />
+          </Provider>
+        </FluentProvider>
+      </IdPrefixProvider>
     </>
   );
 };

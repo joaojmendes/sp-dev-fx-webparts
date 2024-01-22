@@ -4,8 +4,6 @@ import {
 } from '@fluentui/react-components';
 
 export const useLeftStyles = makeStyles({
- 
-  
     leftContainer : {
         ...shorthands.gridArea("left"),
         display: "flex",
@@ -13,5 +11,4 @@ export const useLeftStyles = makeStyles({
          rowGap: "20px",
          ...shorthands.padding("20px"),
     },
-     
   });

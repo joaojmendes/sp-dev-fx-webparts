@@ -13,7 +13,7 @@ import { ICustomer } from '../models/ICustomer';
 import { IOrder } from '../models/IOrder';
 
 interface IuseGraphAPI {
-  searchOrders: (searchText: string) => Promise<any>;
+  searchOrders: (searchText: string) => Promise<IOrder[]>;
   getCustomers: (searchText: string) => Promise<ICustomer[] | []>;
 }
 
@@ -109,8 +109,8 @@ export const useGraphAPI = (context: BaseComponentContext): IuseGraphAPI => {
   );
 
   const searchOrders = React.useCallback(
-    async (searchText: string): Promise<any> => {
-      if (!graphClient) return undefined;
+    async (searchText: string): Promise<IOrder[] > => {
+      if (!graphClient) return [];
 
       const request = {
         requests: [
@@ -128,12 +128,9 @@ export const useGraphAPI = (context: BaseComponentContext): IuseGraphAPI => {
 
       try {
         const response = await (await graphClient)?.api(`search/query`).post(request);
-
         const result: SearchHit[] = response?.value[0]?.hitsContainers[0]?.hits;
         if (!result) return [];
-
         const ordersList = mappingOrders(result);
-        console.log(ordersList);
         return ordersList;
       } catch (error) {
         console.log("[searchOrders] error:", error);

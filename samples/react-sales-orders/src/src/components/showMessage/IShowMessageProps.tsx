@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { EMessageType } from '../constants/EMessageTypes';
+import { EMessageType } from '../../constants/EMessageTypes';
 
 export interface IShowMessageProps {
   isShow: boolean;
