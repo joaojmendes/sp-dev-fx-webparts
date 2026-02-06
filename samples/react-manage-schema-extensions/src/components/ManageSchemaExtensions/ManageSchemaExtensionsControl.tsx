@@ -1,6 +1,15 @@
 import * as React from "react";
 
 import { Divider, Subtitle1 } from "@fluentui/react-components";
+import {
+  Add20Regular,
+  ArrowClockwise20Regular,
+  ArrowSync20Regular,
+  DatabaseSearch20Regular,
+  Delete20Regular,
+  Edit20Regular,
+  Eye20Regular,
+} from "@fluentui/react-icons";
 
 import { ChangeSchemaStatus } from "../ChangeSchemaStatus";
 import { DeleteSchemaExtension } from "../DeleteSchemaExtension";
@@ -10,8 +19,9 @@ import { InformationPanel } from "./InformationPanel";
 import SchemaExtensionDrawer from "../SchemaExtensionDrawer/SchemaExtensionDrawer";
 import { SchemaExtensionViewer } from "../SchemaExtensionViewer";
 import SchemaExtensionsListView from "../SchemaExtensionsListView/SchemaExtensionsListView";
-import SchemaExtensionsToolbar from "../SchemaExtensionsToolbar/SchemaExtensionsToolbar";
+import { ListToolbar, IToolbarItem } from "../ListToolbar";
 import { SchemaStatusRestrictionDialog } from "../SchemaExtensionDrawer";
+import { ResourceSchemaManager } from "../ResourceSchemaManager";
 import { StackV2 as Stack } from "@spteck/react-controls";
 import { appGlobalStateAtom } from "../../atoms/appGlobalState";
 import { useAtom } from "jotai";
@@ -26,13 +36,15 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
   >(undefined);
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   const [drawerMode, setDrawerMode] = React.useState<"create" | "edit">(
-    "create"
+    "create",
   );
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isChangeStatusDialogOpen, setIsChangeStatusDialogOpen] =
     React.useState(false);
   const [isViewerOpen, setIsViewerOpen] = React.useState(false);
+  const [isResourceManagerOpen, setIsResourceManagerOpen] =
+    React.useState(false);
   const { logInfo } = useLogging();
   const { title } = appGlobalState;
 
@@ -42,7 +54,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
       selectedSchemaExtension?.status === "Available" ||
       selectedSchemaExtension?.status === undefined,
 
-    [selectedSchemaExtension]
+    [selectedSchemaExtension],
   );
 
   const handleAddSchemaExtension = React.useCallback(() => {
@@ -54,7 +66,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
     (schemaExtension: ISchemaExtension | undefined) => {
       setSelectedSchemaExtension(schemaExtension);
     },
-    []
+    [],
   );
 
   const handleEditSchemaExtension = React.useCallback(
@@ -63,7 +75,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
       setDrawerMode("edit");
       setIsDrawerOpen(true);
     },
-    []
+    [],
   );
 
   const handleDeleteSchemaExtension = React.useCallback(
@@ -71,7 +83,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
       logInfo("Delete schema extension:", JSON.stringify(schemaExtension));
       setIsDeleteDialogOpen(true);
     },
-    []
+    [],
   );
 
   const handleViewSchemaExtension = React.useCallback(
@@ -80,7 +92,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
       setSelectedSchemaExtension(schemaExtension);
       setIsViewerOpen(true);
     },
-    [logInfo]
+    [logInfo],
   );
 
   const handleChangeSchemaStatus = React.useCallback(
@@ -89,7 +101,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
       setSelectedSchemaExtension(schemaExtension);
       setIsChangeStatusDialogOpen(true);
     },
-    [logInfo]
+    [logInfo],
   );
 
   const handleRefresh = React.useCallback(() => {
@@ -107,6 +119,14 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
     setIsViewerOpen(false);
   }, []);
 
+  const handleOpenResourceManager = React.useCallback(() => {
+    setIsResourceManagerOpen(true);
+  }, []);
+
+  const handleResourceManagerClose = React.useCallback(() => {
+    setIsResourceManagerOpen(false);
+  }, []);
+
   const handleDrawerSuccess = React.useCallback(() => {
     setIsDrawerOpen(false);
     setSelectedSchemaExtension(undefined);
@@ -115,6 +135,124 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
     setRefreshTrigger((prev) => prev + 1);
   }, []);
 
+  // Check if edit is disabled (Available status extensions can't be edited)
+  const isEditDisabled = selectedSchemaExtension?.status === "Available";
+
+  // Build toolbar items using the new ListToolbar
+  const toolbarItems: IToolbarItem[] = React.useMemo(() => {
+    return [
+      // Add button
+      {
+        key: "add",
+        label: "New",
+        tooltip: "Create a new schema extension",
+        icon: <Add20Regular />,
+        onClick: handleAddSchemaExtension,
+        appearance: "primary",
+        group: "actions",
+        dividerAfter: false,
+      },
+      // Edit button
+      {
+        key: "edit",
+        label: "Edit",
+        tooltip: !selectedSchemaExtension
+          ? "Select a schema extension to edit"
+          : isEditDisabled
+            ? "Available schemas cannot be edited"
+            : "Edit the selected schema extension",
+        icon: <Edit20Regular />,
+        onClick: () =>
+          selectedSchemaExtension &&
+          handleEditSchemaExtension(selectedSchemaExtension),
+        disabled: !selectedSchemaExtension || isEditDisabled,
+        group: "selection",
+        appearance: "subtle",
+      },
+      // View button
+      {
+        key: "view",
+        label: "View",
+        tooltip: !selectedSchemaExtension
+          ? "Select a schema extension to view"
+          : "View the selected schema extension",
+        icon: <Eye20Regular />,
+        onClick: () =>
+          selectedSchemaExtension &&
+          handleViewSchemaExtension(selectedSchemaExtension),
+        disabled: !selectedSchemaExtension,
+        group: "selection",
+        appearance: "subtle",
+      },
+      // Delete button
+      {
+        key: "delete",
+        label: "Delete",
+        tooltip: !selectedSchemaExtension
+          ? "Select a schema extension to delete"
+          : isEditDisabled
+            ? "Available schemas cannot be deleted"
+            : "Delete the selected schema extension",
+        icon: <Delete20Regular />,
+        onClick: () =>
+          selectedSchemaExtension &&
+          handleDeleteSchemaExtension(selectedSchemaExtension),
+        disabled: !selectedSchemaExtension || isEditDisabled,
+        group: "selection",
+        appearance: "subtle",
+      },
+      // Change Status button
+      {
+        key: "changeStatus",
+        label: "Change Status",
+        tooltip: !selectedSchemaExtension
+          ? "Select a schema extension to change status"
+          : "Change the status of the selected schema extension",
+        icon: <ArrowSync20Regular />,
+        onClick: () =>
+          selectedSchemaExtension &&
+          handleChangeSchemaStatus(selectedSchemaExtension),
+        disabled: !selectedSchemaExtension,
+        group: "selection",
+        appearance: "subtle",
+      },
+    ];
+  }, [
+    selectedSchemaExtension,
+    isEditDisabled,
+    handleAddSchemaExtension,
+    handleEditSchemaExtension,
+    handleViewSchemaExtension,
+    handleDeleteSchemaExtension,
+    handleChangeSchemaStatus,
+  ]);
+
+  // Far items (right side)
+  const farItems: IToolbarItem[] = React.useMemo(() => {
+    return [
+      // Resource Manager button
+      {
+        key: "resourceManager",
+        label: "Manage Resources",
+        tooltip: "Manage schema extension attributes on resources",
+        icon: <DatabaseSearch20Regular />,
+        onClick: handleOpenResourceManager,
+        group: "resources",
+        appearance: "subtle" as const,
+      },
+      // Refresh button
+      {
+        key: "refresh",
+        label: "Refresh",
+        tooltip: "Refresh the list",
+        icon: <ArrowClockwise20Regular />,
+        onClick: handleRefresh,
+        group: "refresh",
+        appearance: "subtle" as const,
+      },
+    ];
+  }, [handleOpenResourceManager, handleRefresh]);
+
   return (
     <Stack>
       <Stack gap="5px">
@@ -122,16 +260,14 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
         <InformationPanel />
       </Stack>
 
-      <SchemaExtensionsToolbar
-        selectedSchemaExtension={selectedSchemaExtension}
-        onAdd={handleAddSchemaExtension}
-        onEdit={handleEditSchemaExtension}
-        onDelete={handleDeleteSchemaExtension}
-        onView={handleViewSchemaExtension}
-        onChangeStatus={handleChangeSchemaStatus}
-        onRefresh={handleRefresh}
+      <ListToolbar
+        items={toolbarItems}
+        farItems={farItems}
+        ariaLabel="Schema Extensions Toolbar"
+        showGroupDividers={true}
       />
-      <Divider  />
+
+      <Divider />
       <Stack paddingTop="40px">
         <SchemaExtensionsListView
           onSchemaExtensionSelect={handleSchemaExtensionSelect}
@@ -201,6 +337,19 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
           schemaExtension={selectedSchemaExtension}
         />
       )}
+
+      {/* Resource Schema Manager */}
+      <ResourceSchemaManager
+        context={props.context}
+        isOpen={isResourceManagerOpen}
+        onClose={handleResourceManagerClose}
+        onSuccess={(resourceId, data) => {
+          logInfo(
+            "Resource attributes updated:",
+            JSON.stringify({ resourceId, data }),
+          );
+        }}
+      />
     </Stack>
   );
 };

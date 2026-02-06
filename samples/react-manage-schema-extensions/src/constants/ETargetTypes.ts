@@ -1,8 +1,6 @@
 export enum ETargetTypes {
   User = "User",
   Group = "Group",
-  Application = "Application",
-  Service = "Service",
   AdministrativeUnit = "AdministrativeUnit",
   Contact = "Contact",
   Device = "Device",
@@ -10,4 +8,6 @@ export enum ETargetTypes {
   Message = "Message",
   Organization = "Organization",
   Post = "Post",
+  TodoTask = "TodoTask",
+  TodoTaskList = "TodoTaskList",
 }
