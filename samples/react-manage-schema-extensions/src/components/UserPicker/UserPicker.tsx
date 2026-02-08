@@ -205,12 +205,11 @@ export const UserPicker: React.FunctionComponent<IUserPickerProps> = ({
       className={`${styles.container} ${className || ''}`}
       {...(width && { style: { width } })}
     >
-      <div className={styles.tagPickerStyles}>
-        <TagPicker
+      <TagPicker
           onOptionSelect={onOptionSelect}
           selectedOptions={selectedUserIds}
         >
-        <TagPickerControl>
+        <TagPickerControl className={styles.tagPickerControl}>
           <TagPickerGroup aria-label="Selected Users">
             {selectedUsers.map((user) => (
               <Tag
@@ -232,7 +231,8 @@ export const UserPicker: React.FunctionComponent<IUserPickerProps> = ({
               </Tag>
             ))}
           </TagPickerGroup>
-          <TagPickerInput 
+          <TagPickerInput
+            className={styles.tagPickerInput}
             aria-label="Select Users"
             placeholder={placeholder}
             value={searchValue}
@@ -291,7 +291,6 @@ export const UserPicker: React.FunctionComponent<IUserPickerProps> = ({
           )}
         </TagPickerList>
         </TagPicker>
-      </div>
     </div>
   );
 };

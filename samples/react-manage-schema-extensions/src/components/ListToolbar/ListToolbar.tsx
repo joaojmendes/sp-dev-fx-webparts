@@ -1,80 +1,28 @@
 import * as React from "react";
 import {
-  Toolbar,
   ToolbarButton,
   ToolbarDivider,
-  ToolbarGroup,
   Tooltip,
   Badge,
   Text,
+  Menu,
+  MenuTrigger,
+  MenuPopover,
+  MenuList,
+  MenuItem,
 } from "@fluentui/react-components";
+import { MoreHorizontalRegular } from "@fluentui/react-icons";
 import { useListToolbarStyles } from "./useListToolbarStyles";
 import { IToolbarItem } from "./IToolbarItem";
 import { IListToolbarProps } from "./IListToolbarProps";
+import { useOverflowIndex } from "./useOverflowIndex";
+import { ToolbarItemRenderer } from "./ToolbarItemRenderer";
+import { groupItems, flattenWithDividers } from "./helpers";
 
-/**
- * Renders a single toolbar item
- */
-const ToolbarItemRenderer: React.FC<{
-  item: IToolbarItem;
-  isLoading?: boolean;
-}> = ({ item, isLoading }) => {
-  // Skip if not visible
-  if (item.visible === false) {
-    return null;
-  }
+/* ------------------------------------------------------------------ */
+/*  ListToolbar — main component                                      */
+/* ------------------------------------------------------------------ */
 
-  // Use custom render if provided
-  if (item.onRender) {
-    return item.onRender();
-  }
-
-  const button = (
-    <ToolbarButton
-      key={item.key}
-      aria-label={item.ariaLabel || item.tooltip || item.label}
-      icon={item.icon}
-      onClick={item.onClick}
-      disabled={item.disabled || isLoading}
-      appearance={item.appearance}
-    >
-      {item.label}
-    </ToolbarButton>
-  );
-
-  // Wrap with tooltip if provided
-  if (item.tooltip) {
-    return (
-      <Tooltip content={item.tooltip} relationship="label">
-        {button}
-      </Tooltip>
-    );
-  }
-
-  return button;
-};
-
-/**
- * Groups toolbar items by their group property
- */
-const groupItems = (items: IToolbarItem[]): Map<string, IToolbarItem[]> => {
-  const groups = new Map<string, IToolbarItem[]>();
-  
-  items.forEach((item) => {
-    const groupName = item.group || "default";
-    if (!groups.has(groupName)) {
-      groups.set(groupName, []);
-    }
-    groups.get(groupName)!.push(item);
-  });
-  
-  return groups;
-};
-
-/**
- * A flexible toolbar component that accepts a list of toolbar items
- * with support for grouping, far items, and custom rendering.
- */
 export const ListToolbar: React.FunctionComponent<IListToolbarProps> = ({
   items,
   farItems = [],
@@ -85,61 +33,86 @@ export const ListToolbar: React.FunctionComponent<IListToolbarProps> = ({
   showGroupDividers = true,
 }) => {
   const styles = useListToolbarStyles();
+  const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const leftRef = React.useRef<HTMLDivElement>(null);
+  const rightRef = React.useRef<HTMLDivElement>(null);
+  const measureRef = React.useRef<HTMLDivElement>(null);
 
-  // Separate items into regular and far items
-  const regularItems = React.useMemo(() => {
-    return items.filter((item) => !item.isFarItem && item.visible !== false);
-  }, [items]);
+  // ---- Separate regular vs far items ----
+  const regularItems = React.useMemo(
+    () => items.filter((i) => !i.isFarItem && i.visible !== false),
+    [items],
+  );
 
   const allFarItems = React.useMemo(() => {
-    const itemsFarItems = items.filter(
-      (item) => item.isFarItem && item.visible !== false
-    );
-    const visibleFarItems = farItems.filter((item) => item.visible !== false);
-    return [...itemsFarItems, ...visibleFarItems];
+    const fromItems = items.filter((i) => i.isFarItem && i.visible !== false);
+    const fromFar = farItems.filter((i) => i.visible !== false);
+    return [...fromItems, ...fromFar];
   }, [items, farItems]);
 
-  // Group regular items
-  const groupedItems = React.useMemo(() => {
-    return groupItems(regularItems);
-  }, [regularItems]);
+  const groupedFarItems = React.useMemo(
+    () => groupItems(allFarItems),
+    [allFarItems],
+  );
 
-  // Group far items
-  const groupedFarItems = React.useMemo(() => {
-    return groupItems(allFarItems);
-  }, [allFarItems]);
+  // ---- Build flat list of regular items (items + dividers) ----
+  const flatItems = React.useMemo(
+    () => flattenWithDividers(regularItems, showGroupDividers),
+    [regularItems, showGroupDividers],
+  );
 
-  /**
-   * Renders a group of items with optional dividers
-   */
-  const renderGroup = (
-    groupItems: IToolbarItem[],
+  // ---- Custom overflow detection ----
+  const overflowIndex = useOverflowIndex(
+    toolbarRef,
+    rightRef,
+    measureRef,
+    flatItems.length,
+  );
+
+  // Determine which actual items (not dividers) are hidden
+  const visibleItemKeys = React.useMemo(() => {
+    const keys = new Set<string>();
+    for (let i = 0; i < overflowIndex && i < flatItems.length; i++) {
+      if (flatItems[i].type === "item") {
+        keys.add(flatItems[i].key);
+      }
+    }
+    return keys;
+  }, [flatItems, overflowIndex]);
+
+  const hiddenItems = React.useMemo(
+    () => regularItems.filter((item) => !visibleItemKeys.has(item.key)),
+    [regularItems, visibleItemKeys],
+  );
+
+  const hasOverflow = hiddenItems.length > 0;
+
+  // ---- Render far items ----
+  const renderFarGroup = (
+    groupItemsList: IToolbarItem[],
     groupIndex: number,
-    isLastGroup: boolean
+    isLastGroup: boolean,
   ): React.ReactNode[] => {
     const elements: React.ReactNode[] = [];
 
-    groupItems.forEach((item, itemIndex) => {
-      // Add divider before if specified
+    for (const item of groupItemsList) {
       if (item.dividerBefore) {
         elements.push(<ToolbarDivider key={`${item.key}-divider-before`} />);
       }
-
       elements.push(
         <ToolbarItemRenderer
           key={item.key}
           item={item}
           isLoading={isLoading}
-        />
+          itemClass={styles.farItemButton}
+          labelClass={styles.farItemLabel}
+        />,
       );
-
-      // Add divider after if specified
       if (item.dividerAfter) {
         elements.push(<ToolbarDivider key={`${item.key}-divider-after`} />);
       }
-    });
+    }
 
-    // Add group divider if not the last group and showGroupDividers is true
     if (showGroupDividers && !isLastGroup) {
       elements.push(<ToolbarDivider key={`group-divider-${groupIndex}`} />);
     }
@@ -148,19 +121,84 @@ export const ListToolbar: React.FunctionComponent<IListToolbarProps> = ({
   };
 
   return (
-    <Toolbar aria-label={ariaLabel} className={`${styles.toolbar} ${className || ""}`}>
-      {/* Left side - regular items */}
-      <ToolbarGroup className={styles.leftGroup}>
-        {Array.from(groupedItems.entries()).map(
-          ([_groupName, groupItemsList], groupIndex) =>
-            renderGroup(
-              groupItemsList,
-              groupIndex,
-              groupIndex === groupedItems.size - 1
-            )
+    <div
+      ref={toolbarRef}
+      role="toolbar"
+      aria-label={ariaLabel}
+      className={`${styles.toolbar} ${className || ""}`}
+    >
+      {/* Hidden mirror — renders ALL items for measurement (never clipped) */}
+      <div
+        ref={measureRef}
+        className={styles.measureSection}
+        aria-hidden="true"
+      >
+        {flatItems.map((flat) => {
+          if (flat.type === "divider") {
+            return <ToolbarDivider key={flat.key} />;
+          }
+          return (
+            <ToolbarItemRenderer
+              key={flat.key}
+              item={flat.item!}
+              isLoading={isLoading}
+              itemClass={styles.toolbarItem}
+            />
+          );
+        })}
+      </div>
+
+      {/* Visible container — only renders items that fit + overflow menu */}
+      <div ref={leftRef} className={styles.leftSection}>
+        {flatItems.map((flat, idx) => {
+          if (idx >= overflowIndex) return null;
+
+          if (flat.type === "divider") {
+            return <ToolbarDivider key={flat.key} />;
+          }
+          return (
+            <ToolbarItemRenderer
+              key={flat.key}
+              item={flat.item!}
+              isLoading={isLoading}
+              itemClass={styles.toolbarItem}
+            />
+          );
+        })}
+
+        {/* "..." overflow menu — right next to the last visible item */}
+        {hasOverflow && (
+          <Menu>
+            <MenuTrigger disableButtonEnhancement>
+              <Tooltip
+                content={`${hiddenItems.length} more actions`}
+                relationship="label"
+              >
+                <ToolbarButton
+                  className={styles.overflowButton}
+                  icon={<MoreHorizontalRegular />}
+                  aria-label={`${hiddenItems.length} more actions`}
+                />
+              </Tooltip>
+            </MenuTrigger>
+            <MenuPopover>
+              <MenuList>
+                {hiddenItems.map((item) => (
+                  <MenuItem
+                    key={item.key}
+                    icon={item.icon}
+                    disabled={item.disabled || isLoading}
+                    onClick={item.onClick}
+                  >
+                    {item.label || item.tooltip || item.key}
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </MenuPopover>
+          </Menu>
         )}
-        
-        {/* Total count badge */}
+
+        {/* Total count badge — inside left section */}
         {totalCount !== undefined && totalCount > 0 && (
           <Badge
             appearance="filled"
@@ -170,22 +208,24 @@ export const ListToolbar: React.FunctionComponent<IListToolbarProps> = ({
             <Text size={200}>{totalCount} items</Text>
           </Badge>
         )}
-      </ToolbarGroup>
+      </div>
 
-      {/* Right side - far items */}
-      {allFarItems.length > 0 && (
-        <ToolbarGroup className={styles.rightGroup}>
-          {Array.from(groupedFarItems.entries()).map(
-            ([_groupName, groupItemsList], groupIndex) =>
-              renderGroup(
-                groupItemsList,
-                groupIndex,
-                groupIndex === groupedFarItems.size - 1
-              )
-          )}
-        </ToolbarGroup>
-      )}
-    </Toolbar>
+      {/* Right side — far items (always visible) */}
+      <div ref={rightRef} className={styles.rightGroup}>
+        {allFarItems.length > 0 && (
+          <div className={styles.farItemsContainer}>
+            {Array.from(groupedFarItems.entries()).map(
+              ([_groupName, groupItemsList], groupIndex) =>
+                renderFarGroup(
+                  groupItemsList,
+                  groupIndex,
+                  groupIndex === groupedFarItems.size - 1,
+                ),
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -6,7 +6,7 @@ import {
   Button,
   Checkbox,
   Divider,
-  Drawer,
+
   DrawerBody,
   DrawerFooter,
   DrawerHeader,
@@ -20,6 +20,7 @@ import {
   Subtitle1,
   Textarea,
   tokens,
+  Drawer,
 } from "@fluentui/react-components";
 import {
   DataBarHorizontal20Regular,
@@ -468,13 +469,19 @@ export const SchemaExtensionDrawer: React.FunctionComponent<
 
   return (
     <Drawer
-      type="overlay"
+      className={styles.drawerRoot}
       separator
       open={isOpen}
-      onOpenChange={(_, { open }) => !open && handleClose()}
       size="medium"
       position="end"
-      modalType="alert"
+      
+      type="inline"
+      onOpenChange ={(event, data) => {
+        if (!data.open) {
+          handleClose();
+        }
+      }}
+   
     >
       <DrawerHeader>
         <DrawerHeaderTitle
@@ -728,7 +735,7 @@ export const SchemaExtensionDrawer: React.FunctionComponent<
         )}
       </DrawerBody>
       {/* Footer buttons */}
-      <DrawerFooter>
+      <DrawerFooter className={styles.drawerFooter}>
         <Stack
           gap="10px"
           direction="horizontal"

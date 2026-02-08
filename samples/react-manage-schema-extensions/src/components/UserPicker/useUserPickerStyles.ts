@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { tokens } from '@fluentui/react-components';
 
 export interface IUserPickerStyles {
-  tagPickerStyles: string;
+  tagPickerControl: string;
+  tagPickerInput: string;
   container: string;
   pickerList: string;
   optionContent: string;
@@ -11,105 +12,78 @@ export interface IUserPickerStyles {
 
 export const useUserPickerStyles = (): IUserPickerStyles => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${tokens.spacingVerticalS};
-      position: relative;
-    `,
-    
-    pickerList: css`
-      max-height: 300px;
-      overflow-y: auto;
-      background-color: ${tokens.colorNeutralBackground1};
-      border: 1px solid ${tokens.colorNeutralStroke2};
-      border-radius: ${tokens.borderRadiusMedium};
-      box-shadow: ${tokens.shadow16};
-      scrollbar-color: ${tokens.colorBrandForeground1} ${tokens.colorNeutralBackground1};
-      scrollbar-width: thin;
-      
-      &::-webkit-scrollbar-track {
-        border-radius: 10px;
-        border-width: 1px;
-      }
-      
-      &::-webkit-scrollbar-thumb {
-        border-radius: 10px;
-        border-width: 1px;
-      }
-      
-      &::-webkit-scrollbar {
-        height: 7px;
-        width: 7px;
-      }
-    `,
+    container: css({
+      display: "flex",
+      flexDirection: "column",
+      gap: tokens.spacingVerticalS,
+      position: "relative",
+    }),
 
-    optionContent: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${tokens.spacingVerticalXXS};
-    `,
+    pickerList: css({
+      maxHeight: 300,
+      overflowY: "auto",
+      backgroundColor: tokens.colorNeutralBackground1,
+      border: `1px solid ${tokens.colorNeutralStroke2}`,
+      borderRadius: tokens.borderRadiusMedium,
+      boxShadow: tokens.shadow16,
+      scrollbarColor: `${tokens.colorBrandForeground1} ${tokens.colorNeutralBackground1}`,
+      scrollbarWidth: "thin",
+      "&::-webkit-scrollbar-track": {
+        borderRadius: 10,
+        borderWidth: 1,
+      },
+      "&::-webkit-scrollbar-thumb": {
+        borderRadius: 10,
+        borderWidth: 1,
+      },
+      "&::-webkit-scrollbar": {
+        height: 7,
+        width: 7,
+      },
+    }),
 
-    optionSecondary: css`
-      font-size: ${tokens.fontSizeBase200};
-  
-      font-weight: ${tokens.fontWeightRegular};
-    `,
-    
-    tagPickerStyles: css`
-      
-      /* Target the root element and its direct children */
-      > div {
-        border: 1px solid ${tokens.colorNeutralStroke2};
-        border-radius: 50px; /* Fully circular/pill shape */
-        background-color: ${tokens.colorNeutralBackground1};
-        padding: 0px 10px;
-        box-shadow: none;
-        transition: all 0.2s ease;
-        position: relative;
+    optionContent: css({
+      display: "flex",
+      flexDirection: "column",
+      gap: tokens.spacingVerticalXXS,
+    }),
 
-        /* Remove default focus styling */
-        &::after {
-          display: none !important;
-        }
+    optionSecondary: css({
+      fontSize: tokens.fontSizeBase200,
+      color: tokens.colorNeutralForeground3,
+      fontWeight: tokens.fontWeightRegular as unknown as number,
+    }),
 
-        &:hover {
-          border-color: ${tokens.colorBrandStroke1};
-        }
+    tagPickerControl: css({
+      border: `1px solid ${tokens.colorNeutralStroke2}`,
+      borderRadius: 50,
+      backgroundColor: tokens.colorNeutralBackground1,
+      padding: "0px 10px",
+      boxShadow: "none",
+      transition: "all 0.2s ease",
+      "&::after": {
+        display: "none !important",
+      },
+      "&:hover": {
+        borderColor: tokens.colorBrandStroke1,
+      },
+      "&:focus-within": {
+        borderColor: tokens.colorBrandStroke1,
+        boxShadow: `0 0 0 2px ${tokens.colorBrandBackground2}`,
+      },
+    }),
 
-        &:focus-within {
-          outline: none;
-          border-color: ${tokens.colorBrandStroke1};
-        }
-
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          border-color: ${tokens.colorNeutralStroke3};
-          background-color: ${tokens.colorNeutralBackground3};
-        }
-      }
-
-      /* Remove any internal focus indicators from all elements */
-      * {
-        &:focus {
-          outline: none !important;
-          box-shadow: none !important;
-        }
-      }
-
-      /* Style the tag group container using attribute selectors */
-      [role="group"] {
-        display: flex;
-        flex-wrap: wrap;
-        gap: ${tokens.spacingHorizontalXS};
-        margin-right: ${tokens.spacingHorizontalS};
-      }
-
-      /* Style individual tags using proper selectors */
-      [role="button"][aria-label*="Remove"] {
-        margin: 0;
-      }
-    `
+    tagPickerInput: css({
+      backgroundColor: "transparent",
+      border: "none",
+      outline: "none",
+      fontSize: tokens.fontSizeBase300,
+      "&::placeholder": {
+        color: tokens.colorNeutralForeground4,
+      },
+      "&:focus": {
+        outline: "none",
+      },
+    }),
   };
 };

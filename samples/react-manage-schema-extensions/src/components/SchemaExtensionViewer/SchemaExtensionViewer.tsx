@@ -6,7 +6,7 @@ import {
   Button,
   Checkbox,
   Divider,
-  Drawer,
+  InlineDrawer,
   DrawerBody,
   DrawerFooter,
   DrawerHeader,
@@ -112,11 +112,10 @@ export const SchemaExtensionViewer: React.FunctionComponent<
   }, []);
 
   return (
-    <Drawer
-      type="overlay"
+    <InlineDrawer
+      className={styles.drawerRoot}
       separator
       open={isOpen}
-      onOpenChange={(_, { open }) => !open && handleClose()}
       size="medium"
       position="end"
     >
@@ -135,7 +134,7 @@ export const SchemaExtensionViewer: React.FunctionComponent<
         </DrawerHeaderTitle>
       </DrawerHeader>
       <Divider style={{ flexGrow: 0 }} />
-      <DrawerBody>
+      <DrawerBody  style={{ padding:0, overflow: "hidden",  }}>
         <div className={styles.drawerContent}>
           {!schemaExtension ? (
             <Stack gap="0" padding="l" className={styles.noDataContainer}>
@@ -235,7 +234,7 @@ export const SchemaExtensionViewer: React.FunctionComponent<
               )}
 
               {/* Target Types */}
-              <Stack gap="5px" paddingTop="l">
+              <Stack gap="5px" padding="m">
                 <Stack gap="5px" direction="horizontal">
                   <RenderLabel
                     label={strings.TargetTypesLabel}
@@ -271,7 +270,7 @@ export const SchemaExtensionViewer: React.FunctionComponent<
               </Stack>
 
               {/* Properties */}
-              <Stack gap="5px" paddingTop="xl">
+              <Stack gap="5px"  padding="m"   paddingTop="xl">
                 <Stack gap="5px" direction="horizontal">
                   <RenderLabel
                     label={strings.PropertiesLabel}
@@ -293,7 +292,7 @@ export const SchemaExtensionViewer: React.FunctionComponent<
           )}
         </div>
       </DrawerBody>
-      <DrawerFooter>
+      <DrawerFooter className={styles.drawerFooter}>
         <Stack
           direction="horizontal"
           gap="10px"
@@ -305,7 +304,7 @@ export const SchemaExtensionViewer: React.FunctionComponent<
           </Button>
         </Stack>
       </DrawerFooter>
-    </Drawer>
+    </InlineDrawer>
   );
 };
 

@@ -18,9 +18,11 @@ import { ISchemaExtension } from "../../models/ISchemaExtension";
 import { useResourceSchemaExtension } from "../../hooks/useResourceSchemaExtension";
 import { useResourcePickerStyles } from "./useResourcePickerStyles";
 import { DataUsageSettings24Regular } from "@fluentui/react-icons";
+import {   useAtomValue } from "jotai";
+import { appGlobalStateAtom } from "../../atoms/appGlobalState";
 
 export interface ISchemaExtensionPickerProps {
-  context: BaseComponentContext;
+ 
   selectedSchemaExtension?: ISchemaExtension;
   onSelectionChange?: (schemaExtension: ISchemaExtension | undefined) => void;
   placeholder?: string;
@@ -30,7 +32,7 @@ export interface ISchemaExtensionPickerProps {
 }
 
 export const SchemaExtensionPicker: React.FunctionComponent<ISchemaExtensionPickerProps> = ({
-  context,
+  
   selectedSchemaExtension,
   onSelectionChange,
   placeholder = "Search for schema extensions...",
@@ -39,7 +41,10 @@ export const SchemaExtensionPicker: React.FunctionComponent<ISchemaExtensionPick
   className,
 }) => {
   const styles = useResourcePickerStyles();
-  const { getSchemaExtensions } = useResourceSchemaExtension({ context });
+  const appGlobalState = useAtomValue(appGlobalStateAtom);
+  
+  const { context } = appGlobalState || {};
+  const { getSchemaExtensions } = useResourceSchemaExtension({ context: context as BaseComponentContext });
 
   const [availableSchemas, setAvailableSchemas] = useState<ISchemaExtension[]>([]);
   const [filteredSchemas, setFilteredSchemas] = useState<ISchemaExtension[]>([]);
@@ -164,13 +169,12 @@ export const SchemaExtensionPicker: React.FunctionComponent<ISchemaExtensionPick
       className={`${styles.container} ${className || ""}`}
       {...(width && { style: { width } })}
     >
-      <div className={styles.tagPickerStyles}>
-        <TagPicker
+      <TagPicker
           onOptionSelect={onOptionSelect}
           selectedOptions={selectedSchemaIds}
           disabled={disabled}
         >
-          <TagPickerControl>
+          <TagPickerControl className={styles.tagPickerControl}>
             <TagPickerGroup aria-label="Selected Schema Extension">
               {selectedSchemaExtension && (
                 <Tag
@@ -192,6 +196,7 @@ export const SchemaExtensionPicker: React.FunctionComponent<ISchemaExtensionPick
               )}
             </TagPickerGroup>
             <TagPickerInput
+              className={styles.tagPickerInput}
               aria-label="Select Schema Extension"
               placeholder={selectedSchemaExtension ? "" : placeholder}
               value={searchValue}
@@ -251,7 +256,6 @@ export const SchemaExtensionPicker: React.FunctionComponent<ISchemaExtensionPick
             )}
           </TagPickerList>
         </TagPicker>
-      </div>
     </div>
   );
 };

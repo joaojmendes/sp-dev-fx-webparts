@@ -13,7 +13,7 @@ import {
 } from "@fluentui/react-components";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BaseComponentContext } from "@microsoft/sp-component-base";
-import { IGraphResource, useResourceSchemaExtension } from "../../hooks/useResourceSchemaExtension";
+import { IGraphResource, IResourcePageResult, useResourceSchemaExtension } from "../../hooks/useResourceSchemaExtension";
 import { ETargetTypes } from "../../constants";
  
 import {
@@ -27,6 +27,7 @@ import {
   Shield24Regular,
 } from "@fluentui/react-icons";
 import { useResourcePickerStyles } from "./useResourcePickerStyles";
+import { useUtils } from "../../utils/useUtils";
 
 export interface IResourcePickerProps {
   context: BaseComponentContext;
@@ -118,12 +119,18 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
   className,
 }) => { 
   const styles = useResourcePickerStyles();
+  const { getInitials } = useUtils();
   const { getResourcesByType } = useResourceSchemaExtension({ context });
   
   const [availableResources, setAvailableResources] = useState<IGraphResource[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Infinite scroll state
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>(undefined);
 
   // Debounce timer ref
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,20 +156,26 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
       if (!targetType) {
         setAvailableResources([]);
         setHasLoaded(false);
+        setHasMore(false);
+        setNextPageToken(undefined);
         return;
       }
 
       setIsSearching(true);
       try {
-        const result = await getResourcesByType(targetType);
+        const result = await getResourcesByType(targetType, undefined, undefined, 20);
         if (!isCancelled) {
-          setAvailableResources(result);
+          setAvailableResources(result.resources);
+          setHasMore(result.hasMore);
+          setNextPageToken(result.nextPageToken);
           setHasLoaded(true);
         }
       } catch (error) {
         console.error("Error loading initial resources:", error);
         if (!isCancelled) {
           setAvailableResources([]);
+          setHasMore(false);
+          setNextPageToken(undefined);
           setHasLoaded(true);
         }
       } finally {
@@ -193,11 +206,13 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
     }
 
     if (!value.trim()) {
-      // If empty, reload initial resources
+      // If empty, reload initial resources with pagination
       setIsSearching(true);
       try {
-        const result = await getResourcesByType(targetType);
-        setAvailableResources(result);
+        const result = await getResourcesByType(targetType, undefined, undefined, 20);
+        setAvailableResources(result.resources);
+        setHasMore(result.hasMore);
+        setNextPageToken(result.nextPageToken);
       } catch (error) {
         console.error("Error loading resources:", error);
       } finally {
@@ -210,11 +225,16 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
     searchTimerRef.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const results = await getResourcesByType(targetType, value.trim());
-        setAvailableResources(results);
+        const results = await getResourcesByType(targetType, value.trim(), undefined, 20);
+        setAvailableResources(results.resources);
+        // Disable infinite scroll during search
+        setHasMore(false);
+        setNextPageToken(undefined);
       } catch (error) {
         console.error("Error searching resources:", error);
         setAvailableResources([]);
+        setHasMore(false);
+        setNextPageToken(undefined);
       } finally {
         setIsSearching(false);
       }
@@ -222,10 +242,48 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
   }, [targetType, getResourcesByType]);
 
   /**
+   * Load more resources for infinite scroll
+   */
+  const loadMoreResources = useCallback(async () => {
+    if (!hasMore || isLoadingMore || !nextPageToken || searchValue.trim()) {
+      return;
+    }
+
+    setIsLoadingMore(true);
+    try {
+      const result = await getResourcesByType(targetType, undefined, nextPageToken, 20);
+      setAvailableResources(prev => [...prev, ...result.resources]);
+      setHasMore(result.hasMore);
+      setNextPageToken(result.nextPageToken);
+    } catch (error) {
+      console.error("Error loading more resources:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [getResourcesByType, targetType, hasMore, isLoadingMore, nextPageToken, searchValue]);
+
+  /**
+   * Handle scroll event for infinite scroll
+   */
+  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    if (!hasMore || isLoadingMore || searchValue.trim()) {
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    const threshold = 100;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - threshold;
+
+    if (isNearBottom) {
+      loadMoreResources().catch(console.error);
+    }
+  }, [hasMore, isLoadingMore, searchValue, loadMoreResources]);
+
+  /**
    * Handle option selection and dismissal - follows the UserPicker pattern
    */
   const onOptionSelect: TagPickerProps["onOptionSelect"] = useCallback((e, data) => {
-    if (data.value === "no-options" || data.value === "loading") {
+    if (data.value === "no-options" || data.value === "loading" || data.value === "loading-more") {
       return;
     }
 
@@ -251,10 +309,12 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
 
       // Clear search input and reset to initial resources after selection
       setSearchValue("");
-      // Load initial resources to reset the list
+      // Load initial resources to reset the list with pagination
       if (targetType) {
-        getResourcesByType(targetType).then((result) => {
-          setAvailableResources(result);
+        getResourcesByType(targetType, undefined, undefined, 20).then((result: IResourcePageResult) => {
+          setAvailableResources(result.resources);
+          setHasMore(result.hasMore);
+          setNextPageToken(result.nextPageToken);
         }).catch(console.error);
       }
     }
@@ -281,13 +341,12 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
       className={`${styles.container} ${className || ""}`}
       {...(width && { style: { width } })}
     >
-      <div className={styles.tagPickerStyles}>
-        <TagPicker
+      <TagPicker
           onOptionSelect={onOptionSelect}
           selectedOptions={selectedResourceIds}
           disabled={disabled || !targetType}
         >
-          <TagPickerControl>
+          <TagPickerControl className={styles.tagPickerControl}>
             <TagPickerGroup aria-label="Selected Resources">
               {selectedResources.map((resource) => (
                 <Tag
@@ -298,6 +357,8 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
                       name={getResourceDisplayName(resource, targetType)}
                       size={20}
                       icon={getTargetTypeIcon(targetType)}
+                      color="colorful"
+                      initials={getInitials(getResourceDisplayName(resource, targetType))}
                     />
                   }
                   value={resource.id}
@@ -309,6 +370,7 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
               ))}
             </TagPickerGroup>
             <TagPickerInput
+              className={styles.tagPickerInput}
               aria-label="Select Resources"
               placeholder={getPlaceholder()}
               value={searchValue}
@@ -319,6 +381,7 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
 
           <TagPickerList
             ref={listRef}
+            onScroll={handleScroll}
             className={styles.pickerList}
           >
             {isSearching ? (
@@ -341,6 +404,8 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
                           name={displayName}
                           size={36}
                           icon={getTargetTypeIcon(targetType)}
+                          color="colorful"
+                          initials={getInitials(displayName)}
                         />
                       }
                     >
@@ -355,6 +420,11 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
                     </TagPickerOption>
                   );
                 })}
+                {isLoadingMore && !searchValue.trim() && (
+                  <TagPickerOption value="loading-more">
+                    Loading more...
+                  </TagPickerOption>
+                )}
               </>
             ) : (
               <TagPickerOption value="no-options">
@@ -369,7 +439,6 @@ export const ResourcePicker: React.FunctionComponent<IResourcePickerProps> = ({
             )}
           </TagPickerList>
         </TagPicker>
-      </div>
     </div>
   );
 };

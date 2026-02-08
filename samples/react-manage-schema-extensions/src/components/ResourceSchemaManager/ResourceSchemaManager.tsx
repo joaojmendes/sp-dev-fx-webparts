@@ -6,7 +6,7 @@ import {
   CardHeader,
   Badge,
   Divider,
-  OverlayDrawer,
+  InlineDrawer,
   DrawerHeader,
   DrawerHeaderTitle,
   DrawerBody,
@@ -19,7 +19,7 @@ import {
   Dismiss24Regular,
   DataBarHorizontal20Regular,
 } from "@fluentui/react-icons";
-import { BaseComponentContext } from "@microsoft/sp-component-base";
+ 
 import { ISchemaExtension } from "../../models/ISchemaExtension";
 import {
   IGraphResource,
@@ -34,9 +34,12 @@ import { StackV2, TypographyControl } from "@spteck/react-controls";
 import { UserPicker } from "../UserPicker/UserPicker";
 import { IUserProfile } from "../../models/IUserData";
 import { ETargetTypes } from "../../constants";
+import { useAppToast } from "@spteck/m365-hooks";
+import { useAtomValue } from "jotai";
+import { appGlobalStateAtom } from "../../atoms/appGlobalState";
+import { BaseComponentContext } from "@microsoft/sp-component-base";
 
 export interface IResourceSchemaManagerProps {
-  context: BaseComponentContext;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (resourceId: string, data: IResourceAttributeData) => void;
@@ -44,9 +47,11 @@ export interface IResourceSchemaManagerProps {
 
 export const ResourceSchemaManager: React.FunctionComponent<
   IResourceSchemaManagerProps
-> = ({ context, isOpen, onClose, onSuccess }) => {
+> = ({ isOpen, onClose, onSuccess }) => {
   const styles = useResourceSchemaManagerStyles();
-
+  const { showSuccessToast } = useAppToast();
+  const appGlobalState = useAtomValue(appGlobalStateAtom);
+  const { context } = appGlobalState || {};
   // State
   const [selectedSchema, setSelectedSchema] = React.useState<
     ISchemaExtension | undefined
@@ -131,6 +136,7 @@ export const ResourceSchemaManager: React.FunctionComponent<
   const handleSuccess = React.useCallback(
     (resourceId: string, data: IResourceAttributeData) => {
       setSaveSuccessful(true);
+      showSuccessToast("Attributes saved successfully");
       onSuccess?.(resourceId, data);
       // Close the drawer after a short delay to show success state
       setTimeout(() => {
@@ -175,11 +181,10 @@ export const ResourceSchemaManager: React.FunctionComponent<
   }, []);
 
   return (
-    <OverlayDrawer
+    <InlineDrawer
+      className={styles.drawerRoot}
       open={isOpen}
-      onOpenChange={(_, { open }) => !open && onClose()}
       position="end"
-      modalType="alert"
       style={{ width: "550px" }}
     >
       <DrawerHeader>
@@ -197,15 +202,15 @@ export const ResourceSchemaManager: React.FunctionComponent<
         </DrawerHeaderTitle>
       </DrawerHeader>
       <Divider style={{ flexGrow: 0 }} />
-      <DrawerBody>
-        <StackV2 paddingTop="l">
+      <DrawerBody className={styles.drawerContent}>
+        <StackV2 className={styles.drawerBodyInner}>
           {/*Select Schema Extension */}
           <StackV2 className={styles.section}>
             <Text className={styles.sectionTitle}>Select Schema Extension</Text>
 
             <Field label="Schema Extension" required>
               <SchemaExtensionPicker
-                context={context}
+                 
                 selectedSchemaExtension={selectedSchema}
                 onSelectionChange={handleSchemaChange}
                 placeholder="Search for schema extensions..."
@@ -285,7 +290,7 @@ export const ResourceSchemaManager: React.FunctionComponent<
               <Field label={`${selectedTargetType}`} required>
                 {selectedTargetType === ETargetTypes.User ? (
                   <UserPicker
-                    context={context}
+                    context={context as BaseComponentContext}
                     selectedUsers={selectedResources.map(
                       (r) =>
                         ({
@@ -312,7 +317,7 @@ export const ResourceSchemaManager: React.FunctionComponent<
                   />
                 ) : (
                   <ResourcePicker
-                    context={context}
+                    context={context as BaseComponentContext}
                     targetType={selectedTargetType}
                     selectedResources={selectedResources}
                     onSelectionChange={handleResourceChange}
@@ -327,12 +332,12 @@ export const ResourceSchemaManager: React.FunctionComponent<
           {/* Manage Attributes */}
           {selectedSchema && selectedTargetType && selectedResource && (
             <>
-              <Divider />
-              <StackV2 className={styles.section}>
+              <Divider className={styles.divider} />
+              <StackV2 className={styles.attributeManagerSection}>
                 <Text className={styles.sectionTitle}> Manage Attributes</Text>
 
                 <ResourceAttributeManager
-                  context={context}
+                  context={context as BaseComponentContext}
                   schemaExtension={selectedSchema}
                   resource={selectedResource}
                   targetType={selectedTargetType}
@@ -341,13 +346,14 @@ export const ResourceSchemaManager: React.FunctionComponent<
                   onSaveRef={saveRef}
                   onResetRef={resetRef}
                   onStateChange={setAttributeState}
+                  hasMultipleTargetTypes={hasMultipleTargetTypes}
                 />
               </StackV2>
             </>
           )}
         </StackV2>
       </DrawerBody>
-      <DrawerFooter>
+      <DrawerFooter className={styles.drawerFooter}>
         <Button appearance="secondary" onClick={onClose}>
           Close
         </Button>
@@ -383,6 +389,6 @@ export const ResourceSchemaManager: React.FunctionComponent<
           </>
         )}
       </DrawerFooter>
-    </OverlayDrawer>
+    </InlineDrawer>
   );
 };

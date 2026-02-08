@@ -2,6 +2,11 @@ import { css } from "@emotion/css";
 import { tokens } from "@fluentui/react-components";
 
 export interface IResourceSchemaManagerStyles {
+  drawerRoot: string;
+  drawerFooter: string;
+  drawerContent: string;
+  drawerBodyInner: string;
+  attributeManagerSection: string;
   container: string;
   header: string;
   title: string;
@@ -28,10 +33,56 @@ export interface IResourceSchemaManagerStyles {
   pickerList: string;
   optionContent: string;
   optionSecondary: string;
+  divider: string;
 }
 
 export const useResourceSchemaManagerStyles = (): IResourceSchemaManagerStyles => {
   return {
+    divider: css({
+      margin: `${tokens.spacingVerticalL} 0`,
+      flexGrow: 0,
+      fontSize: tokens.fontSizeBase300,
+      color: tokens.colorNeutralForeground3,
+      
+    }),
+    drawerRoot: css({
+      backgroundColor: tokens.colorNeutralBackground1,
+      paddingLeft: "10px",
+      borderLeft: `1px solid ${tokens.colorNeutralStroke2}`,
+    }),
+    drawerFooter: css({
+      backgroundColor: tokens.colorNeutralBackground1,
+      justifyContent: "flex-end",
+    }),
+    drawerContent: css({
+      padding: 0,
+      display: "flex",
+      flexDirection: "column",
+      gap: tokens.spacingVerticalM,
+      flex: 1,
+      minHeight: 0,
+      overflow: "hidden",
+    }),
+    drawerBodyInner: css({
+      display: "flex",
+      flexDirection: "column",
+      flex: 1,
+      minHeight: 0,
+      overflow: "hidden",
+      paddingTop: tokens.spacingVerticalL,
+    }),
+    attributeManagerSection: css({
+      display: "flex",
+      flexDirection: "column",
+      flex: 1,
+      minHeight: 0,
+      overflow: "hidden",
+      gap: tokens.spacingVerticalM,
+      padding: tokens.spacingVerticalM,
+      backgroundColor: tokens.colorNeutralBackground2,
+      borderRadius: tokens.borderRadiusMedium,
+      border: `1px solid ${tokens.colorNeutralStroke3}`,
+    }),
     container: css`
       display: flex;
       flex-direction: column;

@@ -4,6 +4,8 @@ import { css } from "@emotion/css";
 import { tokens } from "@fluentui/react-components";
 
 export interface ISchemaExtensionDrawerStyles {
+  drawerRoot: string;
+  drawerFooter: string;
   drawerContent: string;
   scrollableContent: string;
   propertiesContainer: string;
@@ -18,6 +20,14 @@ export interface ISchemaExtensionDrawerStyles {
 export const useSchemaExtensionDrawerStyles =
   (): ISchemaExtensionDrawerStyles => {
     return {
+      drawerRoot: css({
+        backgroundColor: tokens.colorNeutralBackground1,
+
+        borderLeft: `1px solid ${tokens.colorNeutralStroke2}`,
+      }),
+      drawerFooter: css({
+        backgroundColor: tokens.colorNeutralBackground1,
+      }),
       inputDisabledColor: css({
         backgroundColor: tokens.colorNeutralBackground3,
         color: tokens.colorNeutralForeground1Selected,
@@ -28,12 +38,26 @@ export const useSchemaExtensionDrawerStyles =
         flexDirection: "column",
         gap: tokens.spacingVerticalM,
         height: "100%",
+        
       }),
 
       scrollableContent: css({
         flex: 1,
         overflowY: "auto",
         paddingRight: tokens.spacingHorizontalXS,
+        scrollbarColor: `${tokens.colorBrandForeground1} transparent`,
+        scrollbarWidth: "thin",
+        "&::-webkit-scrollbar": {
+          width: 8,
+        },
+        "&::-webkit-scrollbar-track": {
+          borderRadius: 10,
+          backgroundColor: "transparent",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          borderRadius: 10,
+          backgroundColor: tokens.colorBrandForeground1,
+        },
       }),
 
       propertiesContainer: css({

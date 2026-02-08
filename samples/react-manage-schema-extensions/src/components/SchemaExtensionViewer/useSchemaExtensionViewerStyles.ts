@@ -2,6 +2,8 @@ import { css } from "@emotion/css";
 import { tokens } from "@fluentui/react-components";
 
 export interface ISchemaExtensionViewerStyles {
+  drawerRoot: string;
+  drawerFooter: string;
   drawerContent: string;
   scrollableContent: string;
   noDataContainer: string;
@@ -18,6 +20,14 @@ export interface ISchemaExtensionViewerStyles {
 export const useSchemaExtensionViewerStyles =
   (): ISchemaExtensionViewerStyles => {
     return {
+      drawerRoot: css({
+        backgroundColor: tokens.colorNeutralBackground1,
+      
+        borderLeft: `1px solid ${tokens.colorNeutralStroke2}`,
+      }),
+      drawerFooter: css({
+        backgroundColor: tokens.colorNeutralBackground1,
+      }),
       inputDisabledColor: css({
         backgroundColor: tokens.colorNeutralBackground3,
         color: tokens.colorNeutralForeground1Selected,
@@ -26,14 +36,29 @@ export const useSchemaExtensionViewerStyles =
         display: "flex",
         flexDirection: "column",
         gap: tokens.spacingVerticalM,
-
-        paddingTop: 15,
+        height: "100%",
+        paddingTop: tokens.spacingVerticalL,
+        paddingLeft: tokens.spacingHorizontalM,
+        paddingRight: tokens.spacingHorizontalM,
       }),
 
       scrollableContent: css({
         flex: 1,
         overflowY: "auto",
         paddingRight: tokens.spacingHorizontalXS,
+        scrollbarColor: `${tokens.colorBrandForeground1} transparent`,
+        scrollbarWidth: "thin",
+        "&::-webkit-scrollbar": {
+          width: 8,
+        },
+        "&::-webkit-scrollbar-track": {
+          borderRadius: 10,
+          backgroundColor: "transparent",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          borderRadius: 10,
+          backgroundColor: tokens.colorBrandForeground1,
+        },
       }),
 
       targetTypesContainer: css({

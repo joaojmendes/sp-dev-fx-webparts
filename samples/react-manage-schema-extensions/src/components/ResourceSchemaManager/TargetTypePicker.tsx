@@ -153,13 +153,12 @@ export const TargetTypePicker: React.FunctionComponent<ITargetTypePickerProps> =
       className={styles.container}
       {...(width && { style: { width } })}
     >
-      <div className={styles.tagPickerStyles}>
-        <TagPicker
+      <TagPicker
           onOptionSelect={handleOptionSelect}
           selectedOptions={selectedOptions}
           disabled={disabled}
         >
-          <TagPickerControl>
+          <TagPickerControl className={styles.tagPickerControl}>
             <TagPickerGroup aria-label="Selected Target Type">
               {selectedTargetType && (
                 <Tag
@@ -182,6 +181,7 @@ export const TargetTypePicker: React.FunctionComponent<ITargetTypePickerProps> =
               )}
             </TagPickerGroup>
             <TagPickerInput
+              className={styles.tagPickerInput}
               aria-label="Select Target Type"
               placeholder={selectedTargetType ? "" : placeholder}
               value={searchValue}
@@ -231,7 +231,6 @@ export const TargetTypePicker: React.FunctionComponent<ITargetTypePickerProps> =
             )}
           </TagPickerList>
         </TagPicker>
-      </div>
     </div>
   );
 };

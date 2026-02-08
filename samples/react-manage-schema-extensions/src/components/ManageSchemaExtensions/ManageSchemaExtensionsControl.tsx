@@ -26,27 +26,52 @@ import { StackV2 as Stack } from "@spteck/react-controls";
 import { appGlobalStateAtom } from "../../atoms/appGlobalState";
 import { useAtom } from "jotai";
 import { useLogging } from "@spteck/m365-hooks";
+import { useManageSchemaExtensionsStyles } from "./useManageSchemaExtensionsStyles";
+import { useAppToast } from "@spteck/m365-hooks";
+
+export enum EActiveDrawer {
+  Create = "create",
+  Edit = "edit",
+  View = "view",
+  ResourceManager = "resourceManager",
+}
 
 export const ManageSchemaExtensionsControl: React.FunctionComponent<
   IManageSchemaExtensionsProps
 > = (props) => {
   const [appGlobalState] = useAtom(appGlobalStateAtom);
+  const styles = useManageSchemaExtensionsStyles();
   const [selectedSchemaExtension, setSelectedSchemaExtension] = React.useState<
     ISchemaExtension | undefined
   >(undefined);
-  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
-  const [drawerMode, setDrawerMode] = React.useState<"create" | "edit">(
-    "create",
+  const [activeDrawer, setActiveDrawer] = React.useState<EActiveDrawer | null>(
+    null,
   );
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isChangeStatusDialogOpen, setIsChangeStatusDialogOpen] =
     React.useState(false);
-  const [isViewerOpen, setIsViewerOpen] = React.useState(false);
-  const [isResourceManagerOpen, setIsResourceManagerOpen] =
-    React.useState(false);
   const { logInfo } = useLogging();
+  const { showSuccessToast} = useAppToast();
   const { title } = appGlobalState;
+
+  // Derived state for drawer visibility
+  const { isDrawerOpen, drawerMode, isViewerOpen, isResourceManagerOpen } =
+    React.useMemo(
+      () => ({
+        isDrawerOpen:
+          activeDrawer === EActiveDrawer.Create ||
+          activeDrawer === EActiveDrawer.Edit,
+        drawerMode:
+          activeDrawer === EActiveDrawer.Edit
+            ? ("edit" as const)
+            : ("create" as const),
+        isViewerOpen: activeDrawer === EActiveDrawer.View,
+        isResourceManagerOpen:
+          activeDrawer === EActiveDrawer.ResourceManager,
+      }),
+      [activeDrawer],
+    );
 
   const canBeEdited = React.useMemo(
     () =>
@@ -58,22 +83,29 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
   );
 
   const handleAddSchemaExtension = React.useCallback(() => {
-    setDrawerMode("create");
-    setIsDrawerOpen(true);
+    setSelectedSchemaExtension(undefined);
+    setActiveDrawer(EActiveDrawer.Create);
   }, []);
 
   const handleSchemaExtensionSelect = React.useCallback(
     (schemaExtension: ISchemaExtension | undefined) => {
       setSelectedSchemaExtension(schemaExtension);
+
+      // If a view/edit drawer is open, keep it open with the new selection
+      // If no item is selected, close the view/edit drawer
+      if (activeDrawer === EActiveDrawer.View || activeDrawer === EActiveDrawer.Edit) {
+        if (!schemaExtension) {
+          setActiveDrawer(null);
+        }
+      }
     },
-    [],
+    [activeDrawer],
   );
 
   const handleEditSchemaExtension = React.useCallback(
     (schemaExtension: ISchemaExtension) => {
       setSelectedSchemaExtension(schemaExtension);
-      setDrawerMode("edit");
-      setIsDrawerOpen(true);
+      setActiveDrawer(EActiveDrawer.Edit);
     },
     [],
   );
@@ -81,6 +113,9 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
   const handleDeleteSchemaExtension = React.useCallback(
     (schemaExtension: ISchemaExtension) => {
       logInfo("Delete schema extension:", JSON.stringify(schemaExtension));
+     
+        setActiveDrawer(null);
+     
       setIsDeleteDialogOpen(true);
     },
     [],
@@ -90,7 +125,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
     (schemaExtension: ISchemaExtension) => {
       logInfo("View schema extension:", JSON.stringify(schemaExtension));
       setSelectedSchemaExtension(schemaExtension);
-      setIsViewerOpen(true);
+      setActiveDrawer(EActiveDrawer.View);
     },
     [logInfo],
   );
@@ -99,6 +134,9 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
     (schemaExtension: ISchemaExtension) => {
       logInfo("Change schema status:", JSON.stringify(schemaExtension));
       setSelectedSchemaExtension(schemaExtension);
+      
+        setActiveDrawer(null);
+  
       setIsChangeStatusDialogOpen(true);
     },
     [logInfo],
@@ -111,26 +149,25 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
   }, []);
 
   const handleDrawerClose = React.useCallback(() => {
-    setIsDrawerOpen(false);
-    setDrawerMode("create");
+    setActiveDrawer(null);
   }, []);
 
   const handleViewerClose = React.useCallback(() => {
-    setIsViewerOpen(false);
+    setActiveDrawer(null);
   }, []);
 
   const handleOpenResourceManager = React.useCallback(() => {
-    setIsResourceManagerOpen(true);
+    setActiveDrawer(EActiveDrawer.ResourceManager);
   }, []);
 
   const handleResourceManagerClose = React.useCallback(() => {
-    setIsResourceManagerOpen(false);
+    setActiveDrawer(null);
   }, []);
 
   const handleDrawerSuccess = React.useCallback(() => {
-    setIsDrawerOpen(false);
+    setActiveDrawer(null);
     setSelectedSchemaExtension(undefined);
-    setDrawerMode("create");
+    showSuccessToast("Operation completed successfully");
     // Trigger a refresh of the list view
     setRefreshTrigger((prev) => prev + 1);
   }, []);
@@ -254,38 +291,37 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
   }, [handleOpenResourceManager, handleRefresh]);
 
   return (
-    <Stack>
-      <Stack gap="5px">
-        <Subtitle1>{title}</Subtitle1>
-        <InformationPanel />
-      </Stack>
+    <div className={styles.appContainer}>
+      <div className={styles.mainContent}>
+        <Stack>
+          <Stack gap="5px">
+            <Subtitle1>{title}</Subtitle1>
+            <InformationPanel />
+          </Stack>
 
-      <ListToolbar
-        items={toolbarItems}
-        farItems={farItems}
-        ariaLabel="Schema Extensions Toolbar"
-        showGroupDividers={true}
-      />
+          <ListToolbar
+            items={toolbarItems}
+            farItems={farItems}
+            ariaLabel="Schema Extensions Toolbar"
+            showGroupDividers={true}
+          />
 
-      <Divider />
-      <Stack paddingTop="40px">
-        <SchemaExtensionsListView
-          onSchemaExtensionSelect={handleSchemaExtensionSelect}
-          onEdit={handleEditSchemaExtension}
-          onDelete={handleDeleteSchemaExtension}
-          onView={handleViewSchemaExtension}
-          refreshTrigger={refreshTrigger}
-          onCreateNew={handleAddSchemaExtension}
-          onChangeStatus={handleChangeSchemaStatus}
-        />
-      </Stack>
-      {isDrawerOpen && !canBeEdited && (
-        <SchemaStatusRestrictionDialog
-          isOpen={isDrawerOpen}
-          onDismiss={handleDrawerClose}
-          schemaExtension={selectedSchemaExtension!}
-        />
-      )}
+          <Divider />
+          <Stack className={styles.listViewContainer} >
+            <SchemaExtensionsListView
+              onSchemaExtensionSelect={handleSchemaExtensionSelect}
+              onEdit={handleEditSchemaExtension}
+              onDelete={handleDeleteSchemaExtension}
+              onView={handleViewSchemaExtension}
+              refreshTrigger={refreshTrigger}
+              onCreateNew={handleAddSchemaExtension}
+              onChangeStatus={handleChangeSchemaStatus}
+            />
+          </Stack>
+        </Stack>
+      </div>
+
+      {/* Inline Drawers */}
       {isDrawerOpen && canBeEdited && (
         <SchemaExtensionDrawer
           isOpen={isDrawerOpen}
@@ -296,40 +332,7 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
           onClose={handleDrawerClose}
         />
       )}
-      {
-        /* Delete Schema Extension Dialog */
-        isDeleteDialogOpen && selectedSchemaExtension && (
-          <DeleteSchemaExtension
-            isOpen={isDeleteDialogOpen}
-            onDismiss={() => setIsDeleteDialogOpen(false)}
-            schemaExtension={selectedSchemaExtension!}
-            onDeleteSuccess={() => {
-              setIsDeleteDialogOpen(false);
-              setSelectedSchemaExtension(undefined);
-              // Trigger a refresh of the list view
-              setRefreshTrigger((prev) => prev + 1);
-            }}
-          />
-        )
-      }
-      {
-        /* Change Schema Status Dialog */
-        isChangeStatusDialogOpen && selectedSchemaExtension && (
-          <ChangeSchemaStatus
-            isOpen={isChangeStatusDialogOpen}
-            onDismiss={() => setIsChangeStatusDialogOpen(false)}
-            schemaExtension={selectedSchemaExtension!}
-            onStatusChangeSuccess={() => {
-              setIsChangeStatusDialogOpen(false);
-              setSelectedSchemaExtension(undefined);
-              // Trigger a refresh of the list view
-              setRefreshTrigger((prev) => prev + 1);
-            }}
-          />
-        )
-      }
 
-      {/* Schema Extension Viewer */}
       {isViewerOpen && (
         <SchemaExtensionViewer
           isOpen={isViewerOpen}
@@ -338,19 +341,51 @@ export const ManageSchemaExtensionsControl: React.FunctionComponent<
         />
       )}
 
-      {/* Resource Schema Manager */}
       <ResourceSchemaManager
-        context={props.context}
         isOpen={isResourceManagerOpen}
         onClose={handleResourceManagerClose}
         onSuccess={(resourceId, data) => {
           logInfo(
+
             "Resource attributes updated:",
             JSON.stringify({ resourceId, data }),
           );
         }}
       />
-    </Stack>
+
+      {/* Dialogs (remain as overlays) */}
+      {isDrawerOpen && !canBeEdited && (
+        <SchemaStatusRestrictionDialog
+          isOpen={isDrawerOpen}
+          onDismiss={handleDrawerClose}
+          schemaExtension={selectedSchemaExtension!}
+        />
+      )}
+      {isDeleteDialogOpen && selectedSchemaExtension && (
+        <DeleteSchemaExtension
+          isOpen={isDeleteDialogOpen}
+          onDismiss={() => setIsDeleteDialogOpen(false)}
+          schemaExtension={selectedSchemaExtension!}
+          onDeleteSuccess={() => {
+            setIsDeleteDialogOpen(false);
+            setSelectedSchemaExtension(undefined);
+            setRefreshTrigger((prev) => prev + 1);
+          }}
+        />
+      )}
+      {isChangeStatusDialogOpen && selectedSchemaExtension && (
+        <ChangeSchemaStatus
+          isOpen={isChangeStatusDialogOpen}
+          onDismiss={() => setIsChangeStatusDialogOpen(false)}
+          schemaExtension={selectedSchemaExtension!}
+          onStatusChangeSuccess={() => {
+            setIsChangeStatusDialogOpen(false);
+            setSelectedSchemaExtension(undefined);
+            setRefreshTrigger((prev) => prev + 1);
+          }}
+        />
+      )}
+    </div>
   );
 };
 

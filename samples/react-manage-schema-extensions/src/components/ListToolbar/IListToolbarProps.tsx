@@ -1,4 +1,6 @@
+import { BaseComponentContext } from "@microsoft/sp-component-base";
 import { IToolbarItem } from "./IToolbarItem";
+import { Theme } from "@fluentui/react";
 
 /**
  * Props for the ListToolbar component
@@ -19,4 +21,8 @@ export interface IListToolbarProps {
     className?: string;
     /** Whether to show dividers between groups */
     showGroupDividers?: boolean;
+    /** Theme for the toolbar */
+    theme?: Theme;
+    /** Context for the web part */
+    context?: BaseComponentContext;
 }

@@ -8,6 +8,7 @@ interface IUseUtils {
   hasPropertyRestrictions: (targetTypes: string[]) => boolean;
   sanitizeUserData: <T>(data: T) => T;
   blobToBase64: (blob: Blob) => Promise<string | undefined>;
+  getInitials: (name: string) => string;
 }
 
 export const useUtils = (): IUseUtils => {
@@ -95,10 +96,24 @@ export const useUtils = (): IUseUtils => {
 };
 
 
+  /**
+   * Gets initials from first and last word of a name
+   * e.g. "John Doe" → "JD", "Alice" → "A", "John Michael Doe" → "JD"
+   */
+  const getInitials = (name: string): string => {
+    if (!name?.trim()) return "";
+    const words = name.trim().split(/\s+/);
+    const first = words[0].charAt(0).toUpperCase();
+    const last = words.length > 1 ? words[words.length - 1].charAt(0).toUpperCase() : "";
+    return `${first}${last}`;
+  };
+
+
   return {
     getAvailablePropertyTypes,
     hasPropertyRestrictions,
     sanitizeUserData,
       blobToBase64,
+      getInitials,
   };
 };

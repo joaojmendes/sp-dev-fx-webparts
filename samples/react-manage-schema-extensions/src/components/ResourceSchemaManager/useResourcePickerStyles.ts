@@ -3,7 +3,8 @@ import { tokens } from "@fluentui/react-components";
 
 export interface IResourcePickerStyles {
   container: string;
-  tagPickerStyles: string;
+  tagPickerControl: string;
+  tagPickerInput: string;
   pickerList: string;
   optionContent: string;
   optionSecondary: string;
@@ -11,93 +12,78 @@ export interface IResourcePickerStyles {
 
 export const useResourcePickerStyles = (): IResourcePickerStyles => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${tokens.spacingVerticalS};
-      position: relative;
-    `,
+    container: css({
+      display: "flex",
+      flexDirection: "column",
+      gap: tokens.spacingVerticalS,
+      position: "relative",
+    }),
 
-    pickerList: css`
-      max-height: 300px;
-      overflow-y: auto;
-      background-color: ${tokens.colorNeutralBackground1};
-      border: 1px solid ${tokens.colorNeutralStroke2};
-      border-radius: ${tokens.borderRadiusMedium};
-      box-shadow: ${tokens.shadow16};
-      scrollbar-color: ${tokens.colorBrandForeground1} ${tokens.colorNeutralBackground1};
-      scrollbar-width: thin;
+    pickerList: css({
+      maxHeight: 300,
+      overflowY: "auto",
+      backgroundColor: tokens.colorNeutralBackground1,
+      border: `1px solid ${tokens.colorNeutralStroke2}`,
+      borderRadius: tokens.borderRadiusMedium,
+      boxShadow: tokens.shadow16,
+      scrollbarColor: `${tokens.colorBrandForeground1} ${tokens.colorNeutralBackground1}`,
+      scrollbarWidth: "thin",
+      "&::-webkit-scrollbar-track": {
+        borderRadius: 10,
+        borderWidth: 1,
+      },
+      "&::-webkit-scrollbar-thumb": {
+        borderRadius: 10,
+        borderWidth: 1,
+      },
+      "&::-webkit-scrollbar": {
+        height: 7,
+        width: 7,
+      },
+    }),
 
-      &::-webkit-scrollbar-track {
-        border-radius: 10px;
-        border-width: 1px;
-      }
+    optionContent: css({
+      display: "flex",
+      flexDirection: "column",
+      gap: tokens.spacingVerticalXXS,
+    }),
 
-      &::-webkit-scrollbar-thumb {
-        border-radius: 10px;
-        border-width: 1px;
-      }
+    optionSecondary: css({
+      fontSize: tokens.fontSizeBase200,
+      color: tokens.colorNeutralForeground3,
+      fontWeight: tokens.fontWeightRegular as unknown as number,
+    }),
 
-      &::-webkit-scrollbar {
-        height: 7px;
-        width: 7px;
-      }
-    `,
+    tagPickerControl: css({
+      border: `1px solid ${tokens.colorNeutralStroke2}`,
+      borderRadius: 50,
+      backgroundColor: tokens.colorNeutralBackground1,
+      padding: "0px 10px",
+      boxShadow: "none",
+      transition: "all 0.2s ease",
+      "&::after": {
+        display: "none !important",
+      },
+      "&:hover": {
+        borderColor: tokens.colorBrandStroke1,
+      },
+      "&:focus-within": {
+        borderColor: tokens.colorBrandStroke1,
+        boxShadow: `0 0 0 2px ${tokens.colorBrandBackground2}`,
+      },
+    }),
 
-    optionContent: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${tokens.spacingVerticalXXS};
-    `,
-
-    optionSecondary: css`
-      font-size: ${tokens.fontSizeBase200};
-      color: ${tokens.colorNeutralForeground3};
-      font-weight: ${tokens.fontWeightRegular};
-    `,
-
-    tagPickerStyles: css`
-      /* Target the root element and its direct children */
-      > div {
-        border: 1px solid ${tokens.colorNeutralStroke2};
-        border-radius: 50px;
-        background-color: ${tokens.colorNeutralBackground1};
-        padding: 0px 10px;
-        box-shadow: none;
-        transition: all 0.2s ease;
-        position: relative;
-
-        /* Remove default focus styling */
-        &::after {
-          display: none !important;
-        }
-
-        &:hover {
-          border-color: ${tokens.colorBrandStroke1};
-        }
-
-        &:focus-within {
-          border-color: ${tokens.colorBrandStroke1};
-          box-shadow: 0 0 0 2px ${tokens.colorBrandBackground2};
-        }
-      }
-
-      /* Style the input */
-      input {
-        background-color: transparent;
-        border: none;
-        outline: none;
-        font-size: ${tokens.fontSizeBase300};
-
-        &::placeholder {
-          color: ${tokens.colorNeutralForeground4};
-        }
-      }
-
-      /* Style the tags */
-      [data-fui-focus-visible] {
-        outline: none;
-      }
-    `,
+    tagPickerInput: css({
+      backgroundColor: "transparent",
+      border: "none",
+      outline: "none",
+      fontSize: tokens.fontSizeBase300,
+      "&::placeholder": {
+        color: tokens.colorNeutralForeground4,
+      },
+      "&:focus": {
+        outline: "none",
+      },
+    }),
   };
 };

@@ -8,10 +8,32 @@ export interface ManageSchemaExtensionsStyles {
   content: string;
   sharePointHost: string;
   otherHosts: string;
+  appContainer: string;
+  mainContent: string;
+    listViewContainer: string;
 }
 
 export const useManageSchemaExtensionsStyles = (): ManageSchemaExtensionsStyles => {
   return {
+    listViewContainer: css({
+      paddiingTop: tokens.spacingVerticalXXL,
+        overflowX: "auto",
+        scrollbarColor: `${tokens.colorBrandForeground1} transparent`,
+        scrollbarWidth: "thin",
+        "&::-webkit-scrollbar": {
+          width: 8,
+        },
+        "&::-webkit-scrollbar-track": {
+          borderRadius: 10,
+          backgroundColor: "transparent",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          borderRadius: 10,
+          backgroundColor: tokens.colorBrandForeground1,
+        },
+      
+         
+    }),
     title: css({
       fontSize: tokens.fontSizeHero800,
       fontWeight: tokens.fontWeightSemibold,
@@ -40,6 +62,17 @@ export const useManageSchemaExtensionsStyles = (): ManageSchemaExtensionsStyles 
       padding: tokens.spacingVerticalL,
       paddingLeft: tokens.spacingHorizontalL,
       paddingRight: tokens.spacingHorizontalL,
+    }),
+    appContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      height: '100%',
+      overflow: 'hidden',
+    }),
+    mainContent: css({
+      flex: 1,
+      minWidth: 0,
+      overflow: 'auto',
     }),
   };
 };

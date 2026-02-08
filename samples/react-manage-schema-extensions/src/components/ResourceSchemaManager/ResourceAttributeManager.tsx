@@ -35,6 +35,7 @@ import {
   ShowMessage,
   TypographyControl,
 } from "@spteck/react-controls";
+import { useResourceAttributeManagerStyles } from "./useResourceAttributeManagerStyles";
 
 export interface IResourceAttributeManagerProps {
   context: BaseComponentContext;
@@ -52,6 +53,7 @@ export interface IResourceAttributeManagerProps {
     hasChanges: boolean;
   }) => void;
   className?: string;
+  hasMultipleTargetTypes?: boolean;
 }
 
 // Get icon for property type
@@ -131,10 +133,12 @@ export const ResourceAttributeManager: React.FunctionComponent<
   onSaveRef,
   onResetRef,
   onStateChange,
+  hasMultipleTargetTypes = false,
   className,
 }) => {
   const { getResourceAttributes, updateResourceAttributes, error } =
     useResourceSchemaExtension({ context });
+  const styles = useResourceAttributeManagerStyles(hasMultipleTargetTypes);
 
   // State
   const [formData, setFormData] = React.useState<IResourceAttributeData>({});
@@ -412,33 +416,8 @@ export const ResourceAttributeManager: React.FunctionComponent<
   }
 
   return (
-    <Stack gap="10px" padding="s">
-      {/* Attributes  */}
-      <Stack gap="10px" padding="s">
-        <Stack gap="5px" direction="horizontal">
-          <TypographyControl
-            fontSize="400"
-            fontWeight="semibold"
-            color={tokens.colorBrandBackground}
-          >
-            Schema Properties ({properties.length})
-          </TypographyControl>
-        </Stack>
-
-        {properties.map((property) => (
-          <Stack key={property.name} gap="5px" padding="s">
-            <Stack gap="5px" direction="horizontal">
-              <RenderLabel
-                label={property.name}
-                icon={getPropertyTypeIcon(property.type)}
-              />
-              <InfoLabel info={`Type: ${property.type}`} />
-            </Stack>
-            {renderPropertyInput(property)}
-          </Stack>
-        ))}
-      </Stack>
-      {/* Success Message */}
+    <Stack gap="10px" padding="s" className={styles.root}>
+        {/* Success Message */}
       {successMessage && (
         <ShowMessage
           message={successMessage}
@@ -453,6 +432,34 @@ export const ResourceAttributeManager: React.FunctionComponent<
           messageType={EMessageType.ERROR}
         />
       )}
+      {/* Attributes  */}
+      <Stack gap="10px" padding="s" className={styles.innerContent}>
+        <Stack gap="5px" direction="horizontal">
+          <TypographyControl
+            fontSize="400"
+            fontWeight="semibold"
+            color={tokens.colorBrandBackground}
+          >
+            Schema Properties ({properties.length})
+          </TypographyControl>
+        </Stack>
+        <div className={styles.propertiesContainer}>
+        {properties.map((property) => (
+          <Stack key={property.name} gap="5px" padding="s">
+            <Stack gap="5px" direction="horizontal">
+              <RenderLabel
+                label={property.name}
+                icon={getPropertyTypeIcon(property.type)}
+              />
+              <InfoLabel info={`Type: ${property.type}`} />
+            </Stack>
+            {renderPropertyInput(property)}
+          </Stack>
+        ))}
+        </div>
+      </Stack>
+      
+    
     </Stack>
   );
 };
